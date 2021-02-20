@@ -38,7 +38,9 @@ class Movie(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def update(self):
+    def update(self, attrs):
+        for k, v in attrs.items():
+            setattr(self, k, v)
         db.session.commit()
 
     def delete(self):

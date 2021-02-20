@@ -1,25 +1,94 @@
-import os
 from flask import Flask, request, abort, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import exc
 from flask_cors import CORS
 
 from models import setup_db, Movie, Actor
+from auth import AuthError, requires_auth
 
-def delete(class_name, id):
-  class_object = class_name.query.get(id)
 
-  if class_object:
-    class_object.delete()
+def get_records(Model):
+  objects = Model.query.order_by(Model.id).all()
+
+  return jsonify({
+    'success': True,
+    'records': [obj.format() for obj in objects],
+    'total_records': Model.query.count()
+  })
+
+
+def delete(Model, id):
+  obj = Model.query.get(id)
+
+  if obj:
+    obj.delete()
 
     return jsonify({
       'success': True,
-      'deleted_id': id,
-      'total_records': class_name.query.count()
+      'deleted': obj.format(),
+      'total_records': Model.query.count()
     })
 
   else:
-    abort(422)
+    abort(404)
+
+
+def add(Model, request, col_list):
+  data = request.get_json()
+
+  if data:
+    kwargs = {}
+    for k in col_list:
+      value = data.get(k)
+      if value:
+        kwargs[k] = value
+      else:
+        abort(422, description=f'{k} is required')
+
+    try:
+      entry = Model(**kwargs)
+      entry.insert()
+
+      return jsonify({
+        'success': True,
+        'added': entry.format(),
+        'total_records': Model.query.count()
+      })
+
+    except Exception as e:
+      print(repr(e))
+      abort(422)
+
+  else:
+    abort(422, description='Data is required')
+
+
+def modify(Model, id, request, col_list):
+  obj = Model.query.get(id)
+  data = request.get_json()
+
+  if obj:
+    if data:
+      attrs = {}
+      for k in col_list:
+        value = data.get(k)
+        if value:
+          attrs[k] = value 
+
+      try:
+        obj.update(attrs)
+
+        return jsonify({
+          'succes': True,
+          'updated': obj.format()
+        })
+      except Exception as e:
+        print(repr(e))
+        abort(422)
+
+    else:
+      abort(422, description='Data is required')
+
+  else:
+    abort(404)      
 
 
 def create_app(test_config=None):
@@ -27,74 +96,101 @@ def create_app(test_config=None):
   setup_db(app)
   CORS(app)
 
-  @app.route('/movies')
-  def get_movies():
-    movies = Movie.query.order_by(Movie.id).all()
 
-    return jsonify({
-      'success': True,
-      'movies': [movie.format() for movie in movies]
-    })
+  #----------------------------------------------------------------------------#
+  # Controllers
+  #----------------------------------------------------------------------------#
 
-  @app.route('/actors')
-  def get_actors():
-    actors = Actor.query.order_by(Actor.id).all()
-    
-    return jsonify({
-      'success': True,
-      'actors': [actor.format() for actor in actors]
-    })
+
+  @app.route('/movies', methods=['GET'])
+  @requires_auth('get:movies')
+  def get_movies(payload):
+    return get_records(Movie)
+
+
+  @app.route('/actors', methods=['GET'])
+  @requires_auth('get:actors')
+  def get_actors(payload):
+    return get_records(Actor)
+
 
   @app.route('/movies/<int:id>', methods=['DELETE'])
-  def delete_movie(id):
+  @requires_auth('delete:movies')
+  def delete_movie(payload, id):
     return delete(Movie, id)
 
 
   @app.route('/actors/<int:id>', methods=['DELETE'])
-  def delete_actor(id):
+  @requires_auth('delete:actors')
+  def delete_actor(payload, id):
     return delete(Actor, id)
 
 
   @app.route('/movies', methods=['POST'])
-  def add_movie():
-    data = request.get_json()
-
-    title = data.get('title')
-    release_date = data.get('release_date')
-
-    try:
-      new_movie = Movie(title=title, release_date=release_date)
-      new_movie.insert()
-
-      return jsonify({
-        'success': True,
-        'added': new_movie.id,
-        'total_records': Movie.query.count()
-      })
-
-    except Exception as error:
-      print(error)      
+  @requires_auth('post:movies')
+  def add_movie(payload):
+    return add(Movie, request, ['title', 'release_date'])   
 
 
   @app.route('/actors', methods=['POST'])
-  def add_actor():
-    data = request.get_json()
+  @requires_auth('post:actors')
+  def add_actor(payload):
+    return add(Actor, request, ['name', 'age', 'gender'])
 
-    name = data.get('name')
-    age = data.get('age')
-    gender = data.get('gender')
 
-    try:
-      new_actor = Actor(name=name, age=age, gender=gender)
-      new_actor.insert()
+  @app.route('/movies/<int:id>', methods=['PATCH'])
+  @requires_auth('patch:movies')
+  def modify_movie(payload, id):
+    return modify(Movie, id, request, ['title', 'release_date'])
 
-      return jsonify({
-        'success': True,
-        'added': new_actor.id,
-        'total_records': Actor.query.count()
-      })
-    except Exception as error:
-      print(error)
+
+  @app.route('/actors/<int:id>', methods=['PATCH'])
+  @requires_auth('patch:actors')
+  def modify_actor(payload, id):
+    return modify(Actor, id, request, ['name', 'age', 'gender'])
+
+
+  #----------------------------------------------------------------------------#
+  # Error Handlers
+  #----------------------------------------------------------------------------#
+
+
+  @app.errorhandler(400)
+  def bad_request(error):
+    return jsonify({
+      'success': False,
+      'error': error.code,
+      'message': 'Bad request'
+    }), 400
+
+
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+      'success': False,
+      'error': error.code,
+      'message': 'Resource not found',
+    }), 404
+
+
+  @app.errorhandler(405)
+  def method_not_allowed(error):
+    return jsonify({
+      'success': False,
+      'error': error.code,
+      'message': 'Method not allowed'
+    }), 405
+
+
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return jsonify({
+      'success': False,
+      'error': error.code, 
+      'message': 'Unprocessable',
+      'description': error.description
+    }), 422
+
 
   return app
 
