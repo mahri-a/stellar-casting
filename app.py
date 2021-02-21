@@ -159,7 +159,7 @@ def create_app(test_config=None):
   def bad_request(error):
     return jsonify({
       'success': False,
-      'error': error.code,
+      'error': 400,
       'message': 'Bad request'
     }), 400
 
@@ -168,7 +168,7 @@ def create_app(test_config=None):
   def not_found(error):
     return jsonify({
       'success': False,
-      'error': error.code,
+      'error': 404,
       'message': 'Resource not found',
     }), 404
 
@@ -177,7 +177,7 @@ def create_app(test_config=None):
   def method_not_allowed(error):
     return jsonify({
       'success': False,
-      'error': error.code,
+      'error': 405,
       'message': 'Method not allowed'
     }), 405
 
@@ -186,10 +186,20 @@ def create_app(test_config=None):
   def unprocessable(error):
     return jsonify({
       'success': False,
-      'error': error.code, 
+      'error': 422, 
       'message': 'Unprocessable',
       'description': error.description
     }), 422
+
+
+  @app.errorhandler(AuthError)
+  def authentification_fail(ex):
+    return jsonify({
+      'success': False,
+      'error': ex.status_code,
+      'message': ex.error['code']
+      'description': ex.error['description']
+    }), ex.status_code
 
 
   return app
