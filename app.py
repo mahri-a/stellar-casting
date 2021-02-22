@@ -197,7 +197,7 @@ def create_app(test_config=None):
     return jsonify({
       'success': False,
       'error': ex.status_code,
-      'message': ex.error['code']
+      'message': ex.error['code'],
       'description': ex.error['description']
     }), ex.status_code
 
