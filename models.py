@@ -1,21 +1,16 @@
 import os
-from sqlalchemy import Column, String, Integer, Date, UniqueConstraint, Table, ForeignKey, create_engine
-from sqlalchemy.orm import sessionmaker, relationship, backref
+from sqlalchemy import Column, String, Integer, Date, UniqueConstraint
 from flask_sqlalchemy import SQLAlchemy
 
-DB_HOST = os.getenv('DB_HOST', '127.0.0.1:5432')  
-DB_USER = os.getenv('DB_USER', 'postgres')  
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')  
-DB_NAME = os.getenv('DB_NAME', 'stellar')  
-DB_PATH = 'postgresql+psycopg2://{}:{}@{}/{}'.format(DB_USER, DB_PASSWORD, DB_HOST, DB_NAME)
+
+DB_PATH = 'postgresql+psycopg2://{}:{}@{}/{}'.format(
+    'mahri', 'pass', '127.0.0.1:5432', 'stellar')
 
 db = SQLAlchemy()
 
-'''
-setup_db(app)
-    binds a flask application and a SQLAlchemy service
-'''
+
 def setup_db(app, database_path=DB_PATH):
+    """Binds a flask application and a SQLAlchemy service."""
     app.config['SQLALCHEMY_DATABASE_URI'] = database_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.app = app
@@ -24,7 +19,7 @@ def setup_db(app, database_path=DB_PATH):
 
 
 association_table = db.Table('association',
-    db.Column('movie_ud', db.Integer, db.ForeignKey('movies.id'), primary_key=True),
+    db.Column('movie_id', db.Integer, db.ForeignKey('movies.id'), primary_key=True),
     db.Column('actor_id', db.Integer, db.ForeignKey('actors.id'), primary_key=True)
 )
 
@@ -37,7 +32,7 @@ class Movie(db.Model):
     title = Column(String, nullable=False)
     release_date = Column(Date, nullable=False)
     
-    cast = db.relationship('Actor', secondary=association_table,
+    actors = db.relationship('Actor', secondary=association_table,
         backref=db.backref('movies', lazy=True))
 
     def __init__(self, title, release_date):
@@ -49,6 +44,7 @@ class Movie(db.Model):
         db.session.commit()
 
     def update(self, attrs):
+        print('update')
         for k, v in attrs.items():
             setattr(self, k, v)
         db.session.commit()
@@ -82,15 +78,18 @@ class Actor(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def update(self):
+    def update(self, attrs):
+        print('update')
+        for k, v in attrs.items():
+            setattr(self, k, v)
         db.session.commit()
 
     def delete(self):
         db.session.delete(self)
         db.session.commit()
 
-    # def __repr__(self):
-    #     return f'<Actor ID: {self.id}, name: {self.name}>'
+    def __repr__(self):
+        return f'<Actor ID: {self.id}, name: {self.name}>'
 
     def format(self):
         return {
