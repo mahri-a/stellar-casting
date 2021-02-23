@@ -5,25 +5,37 @@ from models import setup_db, Movie, Actor
 from auth import AuthError, requires_auth
 
 
+def paginate(query):
+  items_limit = request.args.get('limit', 5, type=int)
+  selected_page = request.args.get('page', 1, type=int)
+  current_index = selected_page - 1
+
+  selection = query.limit(items_limit).offset(current_index * items_limit).all()
+  records = [record.format() for record in selection]
+
+  return records
+
+
 def get_records(Model):
-  objects = Model.query.order_by(Model.id).all()
+  query = Model.query.order_by(Model.id)
+  records = paginate(query)
 
   return jsonify({
     'success': True,
-    'records': [obj.format() for obj in objects],
+    'records': records,
     'total_records': Model.query.count()
   })
 
 
 def delete(Model, id):
-  obj = Model.query.get(id)
+  record = Model.query.get(id)
 
-  if obj:
-    obj.delete()
+  if record:
+    record.delete()
 
     return jsonify({
       'success': True,
-      'deleted': obj.format(),
+      'deleted': record.format(),
       'total_records': Model.query.count()
     })
 
@@ -31,7 +43,7 @@ def delete(Model, id):
     abort(404)
 
 
-def add(Model, request, col_list):
+def add(Model, col_list):
   data = request.get_json()
 
   if data:
@@ -61,24 +73,25 @@ def add(Model, request, col_list):
     abort(422, description='Data is required')
 
 
-def modify(Model, id, request, col_list):
-  obj = Model.query.get(id)
+def modify(Model, id, col_list):
+  record = Model.query.get(id)
   data = request.get_json()
 
-  if obj:
+  if record:
     if data:
       attrs = {}
       for k in col_list:
         value = data.get(k)
         if value:
           attrs[k] = value 
-
+        
       try:
-        obj.update(attrs)
+        print(attrs)
+        record.update(attrs)
 
         return jsonify({
           'succes': True,
-          'updated': obj.format()
+          'updated': record.format()
         })
       except Exception as e:
         print(repr(e))
@@ -129,25 +142,25 @@ def create_app(test_config=None):
   @app.route('/movies', methods=['POST'])
   @requires_auth('post:movies')
   def add_movie(payload):
-    return add(Movie, request, ['title', 'release_date'])   
+    return add(Movie, ['title', 'release_date'])   
 
 
   @app.route('/actors', methods=['POST'])
   @requires_auth('post:actors')
   def add_actor(payload):
-    return add(Actor, request, ['name', 'age', 'gender'])
+    return add(Actor, ['name', 'age', 'gender'])
 
 
   @app.route('/movies/<int:id>', methods=['PATCH'])
   @requires_auth('patch:movies')
   def modify_movie(payload, id):
-    return modify(Movie, id, request, ['title', 'release_date'])
+    return modify(Movie, id, ['title', 'release_date'])
 
 
   @app.route('/actors/<int:id>', methods=['PATCH'])
   @requires_auth('patch:actors')
   def modify_actor(payload, id):
-    return modify(Actor, id, request, ['name', 'age', 'gender'])
+    return modify(Actor, id, ['name', 'age', 'gender'])
 
 
   #----------------------------------------------------------------------------#
@@ -197,8 +210,8 @@ def create_app(test_config=None):
     return jsonify({
       'success': False,
       'error': ex.status_code,
-      'message': ex.error['code'],
-      'description': ex.error['description']
+      'name': ex.error['code'],
+      'message': ex.error['description']
     }), ex.status_code
 
 
