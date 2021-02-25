@@ -1,8 +1,14 @@
+import os
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 
 from models import setup_db, Movie, Actor
 from auth import AuthError, requires_auth
+
+AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
+API_AUDIENCE = os.getenv('API_AUDIENCE')
+AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID')
+AUTH0_CALLBACK_URL = os.getenv('AUTH0_CALLBACK_URL')
 
 
 def paginate(query):
@@ -19,6 +25,9 @@ def paginate(query):
 def get_records(Model):
   query = Model.query.order_by(Model.id)
   records = paginate(query)
+
+  if len(records) == 0:
+    abort(404)
 
   return jsonify({
     'success': True,
@@ -161,6 +170,19 @@ def create_app(test_config=None):
   @requires_auth('patch:actors')
   def modify_actor(payload, id):
     return modify(Actor, id, ['name', 'age', 'gender'])
+
+  
+  @app.route("/authorization/url", methods=["GET"])
+  def generate_auth_url():
+    url = f'https://{AUTH0_DOMAIN}/authorize' \
+        f'?audience={API_AUDIENCE}' \
+        f'&response_type=token&client_id=' \
+        f'{AUTH0_CLIENT_ID}&redirect_uri=' \
+        f'{AUTH0_CALLBACK_URL}'
+        
+    return jsonify({
+        'url': url
+    })
 
 
   #----------------------------------------------------------------------------#
