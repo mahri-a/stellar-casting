@@ -79,7 +79,7 @@ def add(Model, col_list):
       abort(422)
 
   else:
-    abort(422, description='Data is required')
+    abort(400)
 
 
 def modify(Model, id, col_list):
@@ -95,11 +95,10 @@ def modify(Model, id, col_list):
           attrs[k] = value 
         
       try:
-        print(attrs)
         record.update(attrs)
 
         return jsonify({
-          'succes': True,
+          'success': True,
           'updated': record.format()
         })
       except Exception as e:
@@ -107,7 +106,7 @@ def modify(Model, id, col_list):
         abort(422)
 
     else:
-      abort(422, description='Data is required')
+      abort(400)
 
   else:
     abort(404)      
@@ -172,6 +171,7 @@ def create_app(test_config=None):
     return modify(Actor, id, ['name', 'age', 'gender'])
 
   
+  # helper to generate tokens 
   @app.route("/authorization/url", methods=["GET"])
   def generate_auth_url():
     url = f'https://{AUTH0_DOMAIN}/authorize' \
@@ -232,8 +232,8 @@ def create_app(test_config=None):
     return jsonify({
       'success': False,
       'error': ex.status_code,
-      'name': ex.error['code'],
-      'message': ex.error['description']
+      'code': ex.error['code'],
+      'description': ex.error['description']
     }), ex.status_code
 
 

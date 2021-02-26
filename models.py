@@ -44,7 +44,6 @@ class Movie(db.Model):
         db.session.commit()
 
     def update(self, attrs):
-        print('update')
         for k, v in attrs.items():
             setattr(self, k, v)
         db.session.commit()
@@ -79,7 +78,6 @@ class Actor(db.Model):
         db.session.commit()
 
     def update(self, attrs):
-        print('update')
         for k, v in attrs.items():
             setattr(self, k, v)
         db.session.commit()
