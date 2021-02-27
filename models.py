@@ -1,21 +1,20 @@
 import os
 from sqlalchemy import Column, String, Integer, Date, UniqueConstraint
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
-
-DB_PATH = 'postgresql+psycopg2://{}:{}@{}/{}'.format(
-    'mahri', 'pass', '127.0.0.1:5432', 'stellar')
+database_path = os.getenv('DATABASE_URL')
 
 db = SQLAlchemy()
 
 
-def setup_db(app, database_path=DB_PATH):
+def setup_db(app, database_path=database_path):
     """Binds a flask application and a SQLAlchemy service."""
     app.config['SQLALCHEMY_DATABASE_URI'] = database_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.app = app
     db.init_app(app)
-    db.create_all()
+    migrate = Migrate(app, db)
 
 
 association_table = db.Table('association',
