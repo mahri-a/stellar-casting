@@ -122,7 +122,11 @@ def create_app(test_config=None):
   # Controllers
   #----------------------------------------------------------------------------#
 
+  @app.route('/')
+  def index():
+    return jsonify({'message': 'Hello world, this is Stellar Casting.'})
 
+  
   @app.route('/movies', methods=['GET'])
   @requires_auth('get:movies')
   def get_movies(payload):
@@ -171,7 +175,7 @@ def create_app(test_config=None):
     return modify(Actor, id, ['name', 'age', 'gender'])
 
   
-  # helper to generate tokens 
+  # helper to get access tokens 
   @app.route("/authorization/url", methods=["GET"])
   def generate_auth_url():
     url = f'https://{AUTH0_DOMAIN}/authorize' \
