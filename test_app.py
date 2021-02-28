@@ -4,7 +4,12 @@ import json
 from flask_sqlalchemy import SQLAlchemy
 
 from app import create_app
-from models import setup_db, Movie, Actor, association_table
+from models import setup_db, Movie, Actor
+ 
+
+DB_USER = os.getenv('DB_USER', 'postgres')
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')  
+DB_HOST = os.getenv('DB_HOST', '127.0.0.1:5432')  
 
 casting_assistant = os.getenv('CASTING_ASSISTANT_JWT')
 casting_director = os.getenv('CASTING_DIRECTOR_JWT')
@@ -17,8 +22,8 @@ class StellarTestCase(unittest.TestCase):
         """Define test variables and initialize app."""
         self.app = create_app()
         self.client = self.app.test_client
-        self.database_name = "stellar_test"
-        self.database_name = f'postgresql://mahri:pass@localhost:5432/{self.database_name}'
+        self.database_name = 'stellar_test'
+        self.database_path = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{self.database_name}'
         setup_db(self.app, self.database_path)
 
         self.new_movie = {
@@ -51,7 +56,8 @@ class StellarTestCase(unittest.TestCase):
     # Casting assistant, casting director, and executive producer can view actors and movies
 
     def test_get_paginated_movies(self):
-        res = self.client().get('/movies', 
+        res = self.client().get(
+            '/movies', 
             headers={'Authorization': f'Bearer {casting_assistant}'})
         data = json.loads(res.data)
 
@@ -62,7 +68,8 @@ class StellarTestCase(unittest.TestCase):
     
     def test_404_get_paginated_movies(self):
         """Test 404 sent when requesting beyond valid page."""
-        res = self.client().get('/movies?page=1000',
+        res = self.client().get(
+            '/movies?page=1000',
             headers={'Authorization': f'Bearer {casting_assistant}'})
         data = json.loads(res.data)
 
@@ -73,7 +80,7 @@ class StellarTestCase(unittest.TestCase):
 
     def test_get_paginated_actors(self):
         res = self.client().get('/actors', 
-            headers={'Authorization': f'Bearer {casting_assistant}'})
+                headers={'Authorization': f'Bearer {casting_assistant}'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -83,7 +90,8 @@ class StellarTestCase(unittest.TestCase):
     
     def test_404_get_paginated_actors(self):
         """Test 404 sent when requesting beyond valid page."""
-        res = self.client().get('/actors?page=1000',
+        res = self.client().get(
+            '/actors?page=1000',
             headers={'Authorization': f'Bearer {casting_assistant}'})
         data = json.loads(res.data)
 
@@ -109,20 +117,22 @@ class StellarTestCase(unittest.TestCase):
     # Casting director can add actors
     # Executive producer can add actors and movies
 
-    # def test_add_movie(self):
-    #     res = self.client().post('/movies', 
-    #         headers={'Authorization': f'Bearer {executive_producer}'},
-    #         json=self.new_movie)
-    #     data = json.loads(res.data)
+    def test_add_movie(self):
+        res = self.client().post(
+            '/movies', 
+            headers={'Authorization': f'Bearer {executive_producer}'},
+            json=self.new_movie)
+        data = json.loads(res.data)
 
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
-    #     self.assertTrue(data['added'])
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['added'])
 
 
     def test_422_add_movie(self):
         """Test 422 sent when attempting to add a movie with a missing field."""
-        res = self.client().post('/movies', 
+        res = self.client().post(
+            '/movies', 
             headers={'Authorization': f'Bearer {executive_producer}'},
             json={'title': 'Crouching Cat Hidden Turtle'})
         data = json.loads(res.data)
@@ -133,7 +143,8 @@ class StellarTestCase(unittest.TestCase):
 
     
     def test_add_actor(self):
-        res = self.client().post('/actors', 
+        res = self.client().post(
+            '/actors', 
             headers={'Authorization': f'Bearer {casting_director}'},
             json=self.new_actor)
         data = json.loads(res.data)
@@ -145,7 +156,8 @@ class StellarTestCase(unittest.TestCase):
 
     def test_422_add_actor(self):
         """Test 422 sent when attempting to add an actor with a missing field."""
-        res = self.client().post('/actors', 
+        res = self.client().post(
+            '/actors', 
             headers={'Authorization': f'Bearer {casting_director}'},
             json={'name': 'Bob Ross', 'gender':'M'})
         data = json.loads(res.data)
@@ -161,7 +173,8 @@ class StellarTestCase(unittest.TestCase):
     # Casting director and executive producer can modify actors and movies
 
     def test_modify_movie(self):
-        res = self.client().patch('/movies/2', 
+        res = self.client().patch(
+            '/movies/2', 
             headers={'Authorization': f'Bearer {casting_director}'},
             json={'release_date': '2020-02-02'})
         data = json.loads(res.data)
@@ -173,7 +186,8 @@ class StellarTestCase(unittest.TestCase):
 
     def test_400_modify_movie(self):
         """Test 400 sent when json body is not provided."""
-        res = self.client().patch('/movies/2', 
+        res = self.client().patch(
+            '/movies/2', 
             headers={'Authorization': f'Bearer {casting_director}'})
         data = json.loads(res.data)
 
@@ -183,7 +197,8 @@ class StellarTestCase(unittest.TestCase):
     
 
     def test_modify_actor(self):
-        res = self.client().patch('/actors/2', 
+        res = self.client().patch(
+            '/actors/2', 
             headers={'Authorization': f'Bearer {casting_director}'},
             json={'name': 'Keanu Beeves', 'age': 20})
         data = json.loads(res.data)
@@ -195,7 +210,8 @@ class StellarTestCase(unittest.TestCase):
 
     def test_404_modify_actor(self):
         """Test 404 sent when requesting a nonexistent actor."""
-        res = self.client().patch('/actors/1000', 
+        res = self.client().patch(
+            '/actors/1000', 
             headers={'Authorization': f'Bearer {casting_director}'},
             json={'name': 'Sarah Connor'})
         data = json.loads(res.data)
@@ -211,19 +227,21 @@ class StellarTestCase(unittest.TestCase):
     # Casting director can delete actors
     # Executive producer can delete actors and movies 
     
-    # def test_delete_movie(self):
-    #     res = self.client().delete('/movies/1',
-    #         headers={'Authorization': f'Bearer {executive_producer}'})
-    #     data = json.loads(res.data)
+    def test_delete_movie(self):
+        res = self.client().delete(
+            '/movies/1',
+            headers={'Authorization': f'Bearer {executive_producer}'})
+        data = json.loads(res.data)
 
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
-    #     self.assertTrue(data['deleted'])
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['deleted'])
 
 
     def test_404_delete_movie(self):
         """Test 404 sent when requesting a nonexistent movie."""
-        res = self.client().delete('/movies/1000',
+        res = self.client().delete(
+            '/movies/1000',
             headers={'Authorization': f'Bearer {executive_producer}'})
         data = json.loads(res.data)
 
@@ -232,19 +250,21 @@ class StellarTestCase(unittest.TestCase):
         self.assertEqual(data['message'], 'Resource not found')
 
 
-    # def test_delete_actor(self):
-    #     res = self.client().delete('/actors/1',
-    #         headers={'Authorization': f'Bearer {casting_director}'})
-    #     data = json.loads(res.data)
+    def test_delete_actor(self):
+        res = self.client().delete(
+            '/actors/1',
+            headers={'Authorization': f'Bearer {casting_director}'})
+        data = json.loads(res.data)
 
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
-    #     self.assertTrue(data['deleted'])
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['deleted'])
 
 
     def test_404_delete_actor(self):
         """Test 404 sent when requesting a nonexistent actor."""
-        res = self.client().delete('/actors/1000',
+        res = self.client().delete(
+            '/actors/1000',
             headers={'Authorization': f'Bearer {casting_director}'})
         data = json.loads(res.data)
 
@@ -259,7 +279,8 @@ class StellarTestCase(unittest.TestCase):
     # Casting assistant can only view actors and movies
 
     def test_add_movie_casting_assistant(self):
-        res = self.client().post('/movies', 
+        res = self.client().post(
+            '/movies', 
             headers={'Authorization': f'Bearer {casting_assistant}'},
             json=self.new_movie)
         data = json.loads(res.data)
@@ -271,7 +292,8 @@ class StellarTestCase(unittest.TestCase):
 
 
     def test_delete_actor_casting_assistant(self):
-        res = self.client().delete('/actors/3', 
+        res = self.client().delete(
+            '/actors/3', 
             headers={'Authorization': f'Bearer {casting_assistant}'})
         data = json.loads(res.data)
 
@@ -287,7 +309,8 @@ class StellarTestCase(unittest.TestCase):
     # Casting director cannot add or delete a movie
 
     def test_add_movie_casting_director(self):
-        res = self.client().post('/movies',
+        res = self.client().post(
+            '/movies',
             headers={'Authorization': f'Bearer {casting_director}'},
             json=self.new_movie)
         data = json.loads(res.data)
@@ -299,7 +322,8 @@ class StellarTestCase(unittest.TestCase):
 
 
     def test_delete_movie_casting_director(self):
-        res = self.client().delete('/movies/3',
+        res = self.client().delete(
+            '/movies/3',
             headers={'Authorization': f'Bearer {casting_director}'})
         data = json.loads(res.data)
 
@@ -315,7 +339,8 @@ class StellarTestCase(unittest.TestCase):
     # Executive producer has all permissions
 
     def test_modify_movie_executive_producer(self):
-        res = self.client().patch('/movies/2', 
+        res = self.client().patch(
+            '/movies/2', 
             headers={'Authorization': f'Bearer {executive_producer}'},
             json={'release_date': '1998-05-15'})
         data = json.loads(res.data)
@@ -326,7 +351,8 @@ class StellarTestCase(unittest.TestCase):
 
 
     def test_add_actor_executive_producer(self):
-        res = self.client().post('/actors', 
+        res = self.client().post(
+            '/actors',
             headers={'Authorization': f'Bearer {executive_producer}'},
             json=self.new_actor)
         data = json.loads(res.data)
