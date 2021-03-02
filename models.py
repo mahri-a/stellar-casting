@@ -42,13 +42,17 @@ class Movie(db.Model):
         self.title = title,
         self.release_date = release_date
 
+    def __repr__(self):
+        return f'<Movie ID: {self.id}, title: {self.name}>'    
+
     def insert(self):
         db.session.add(self)
         db.session.commit()
 
-    def update(self, attrs):
-        for k, v in attrs.items():
-            setattr(self, k, v)
+    def update(self, attrs=None):
+        if attrs is not None:
+            for k, v in attrs.items():
+                setattr(self, k, v)
         db.session.commit()
 
     def delete(self):
@@ -76,6 +80,9 @@ class Actor(db.Model):
         self.age = age
         self.gender = gender
 
+    def __repr__(self):
+        return f'<Actor ID: {self.id}, name: {self.name}>'
+    
     def insert(self):
         db.session.add(self)
         db.session.commit()
@@ -88,9 +95,6 @@ class Actor(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
-
-    def __repr__(self):
-        return f'<Actor ID: {self.id}, name: {self.name}>'
 
     def format(self):
         return {

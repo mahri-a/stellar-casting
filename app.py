@@ -150,15 +150,15 @@ def create_app(test_config=None):
     def get_actors(payload):
         return get_records(Actor)
 
-    @app.route('/movies/<int:id>', methods=['DELETE'])
+    @app.route('/movies/<int:movie_id>', methods=['DELETE'])
     @requires_auth('delete:movies')
-    def delete_movie(payload, id):
-        return delete(Movie, id)
+    def delete_movie(payload, movie_id):
+        return delete(Movie, movie_id)
 
-    @app.route('/actors/<int:id>', methods=['DELETE'])
+    @app.route('/actors/<int:actor_id>', methods=['DELETE'])
     @requires_auth('delete:actors')
-    def delete_actor(payload, id):
-        return delete(Actor, id)
+    def delete_actor(payload, actor_id):
+        return delete(Actor, actor_id)
 
     @app.route('/movies', methods=['POST'])
     @requires_auth('post:movies')
@@ -170,15 +170,59 @@ def create_app(test_config=None):
     def add_actor(payload):
         return add(Actor, ['name', 'age', 'gender'])
 
-    @app.route('/movies/<int:id>', methods=['PATCH'])
+    @app.route('/movies/<int:movie_id>', methods=['PATCH'])
     @requires_auth('patch:movies')
-    def modify_movie(payload, id):
-        return modify(Movie, id, ['title', 'release_date'])
+    def modify_movie(payload, movie_id):
+        return modify(Movie, movie_id, ['title', 'release_date'])
 
-    @app.route('/actors/<int:id>', methods=['PATCH'])
+    @app.route('/actors/<int:actor_id>', methods=['PATCH'])
     @requires_auth('patch:actors')
-    def modify_actor(payload, id):
-        return modify(Actor, id, ['name', 'age', 'gender'])
+    def modify_actor(payload, actor_id):
+        return modify(Actor, actor_id, ['name', 'age', 'gender'])
+
+    @app.route('/movies/<int:movie_id>/actors', methods=['GET'])
+    @requires_auth('get:movies')
+    def get_movie_cast(payload, movie_id):
+        movie = Movie.query.get(movie_id)
+
+        if movie:
+            actors = [actor.format() for actor in movie.actors]
+
+            return jsonify({
+              'success': True,
+              'movie_title': movie.title,
+              'actors': actors,
+              'total_actors': len(actors)
+            })
+
+        else:
+            abort(404)
+
+    @app.route('/movies/<int:movie_id>/actors', methods=['POST'])
+    @requires_auth('patch:movies')
+    def assign_actor(payload, movie_id):
+        movie = Movie.query.get(movie_id)
+        data = request.get_json()
+
+        if movie and data.get('id'):
+            actor = Actor.query.get(data.get('id'))
+
+            try:
+                movie.actors.append(actor)
+                movie.update()
+
+                return jsonify({
+                    'success': True,
+                    'assigned': actor.format(),
+                    'to_movie': movie.format()
+                })
+
+            except Exception as e:
+                print(repr(e))
+                abort(422)
+
+        else:
+            abort(400)
 
     # ----------------------------------------------------------------#
     # Error Handlers
@@ -227,6 +271,7 @@ def create_app(test_config=None):
         }), ex.status_code
 
     return app
+
 
 app = create_app()
 
