@@ -1,7 +1,7 @@
+export DATABASE_URL='postgresql://mahri:pass@localhost:5432/stellar'
 export DB_USER='mahri'
 export DB_PASSWORD='pass'
 export DB_HOST='127.0.0.1:5432'
-export DB_NAME='stellar'
 
 export AUTH0_DOMAIN='fsnd-mahri.eu.auth0.com'
 export ALGORITHMS=['RS256']

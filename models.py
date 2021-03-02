@@ -3,16 +3,12 @@ from sqlalchemy import Column, String, Integer, Date, UniqueConstraint
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
-DB_USER = os.getenv('DB_USER', 'postgres')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')
-DB_HOST = os.getenv('DB_HOST', '127.0.0.1:5432')
-DB_NAME = os.getenv('DB_NAME', 'capstone')
-DB_PATH = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
+database_path = os.getenv('DATABASE_URL')
 
 db = SQLAlchemy()
 
 
-def setup_db(app, database_path=DB_PATH):
+def setup_db(app, database_path=database_path):
     """Binds a flask application and a SQLAlchemy service."""
     app.config['SQLALCHEMY_DATABASE_URI'] = database_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
