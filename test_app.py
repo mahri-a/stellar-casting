@@ -96,6 +96,29 @@ class StellarTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Resource not found')
 
+    def test_get_movie_cast(self):
+        res = self.client().get(
+            '/movies/3/actors',
+            headers={'Authorization': f'Bearer {casting_director}'})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['movie_title'])
+        self.assertTrue(data['actors'])
+        self.assertTrue(data['total_actors'])
+
+    def test_404_get_movie_cast(self):
+        """Test 404 sent when requesting a nonexistent movie."""
+        res = self.client().get(
+            '/movies/1000/actors',
+            headers={'Authorization': f'Bearer {casting_director}'})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'Resource not found')
+
     def test_401_get_actors(self):
         """Test 401 sent when authorization header is missing."""
         res = self.client().get('/actors')
@@ -164,6 +187,33 @@ class StellarTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Unprocessable')
+
+    def test_assign_actor(self):
+        res = self.client().post(
+            '/movies/1/actors',
+            headers={'Authorization': f'Bearer {casting_director}'},
+            json={'id': 3})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['assigned'])
+        self.assertTrue(data['to_movie'])
+
+    def test_400_assign_movie(self):
+        """
+        Test 400 sent when attempting to assign
+        an actor to a nonexistent movie.
+        """
+        res = self.client().post(
+            '/movies/1000/actors',
+            headers={'Authorization': f'Bearer {casting_director}'},
+            json={'id': 2})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'Bad request')
 
     # ----------------------------------------------------------------#
     # Test PATCH endpoints
