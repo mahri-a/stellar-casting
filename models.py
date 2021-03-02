@@ -4,9 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 DB_USER = os.getenv('DB_USER', 'postgres')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')  
-DB_HOST = os.getenv('DB_HOST', '127.0.0.1:5432')  
-DB_NAME = os.getenv('DB_NAME', 'capstone')  
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')
+DB_HOST = os.getenv('DB_HOST', '127.0.0.1:5432')
+DB_NAME = os.getenv('DB_NAME', 'capstone')
 DB_PATH = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
 
 db = SQLAlchemy()
@@ -22,9 +22,12 @@ def setup_db(app, database_path=DB_PATH):
 
 
 association_table = db.Table('association',
-    db.Column('movie_id', db.Integer, db.ForeignKey('movies.id'), primary_key=True),
-    db.Column('actor_id', db.Integer, db.ForeignKey('actors.id'), primary_key=True)
-)
+                             db.Column(
+                                 'movie_id', db.Integer, db.ForeignKey(
+                                     'movies.id'), primary_key=True),
+                             db.Column(
+                                 'actor_id', db.Integer, db.ForeignKey(
+                                     'actors.id'), primary_key=True))
 
 
 class Movie(db.Model):
@@ -34,8 +37,9 @@ class Movie(db.Model):
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
     release_date = Column(Date, nullable=False)
-    
-    actors = db.relationship('Actor', secondary=association_table,
+
+    actors = db.relationship(
+        'Actor', secondary=association_table,
         backref=db.backref('movies', lazy=True))
 
     def __init__(self, title, release_date):
@@ -43,7 +47,7 @@ class Movie(db.Model):
         self.release_date = release_date
 
     def __repr__(self):
-        return f'<Movie ID: {self.id}, title: {self.name}>'    
+        return f'<Movie ID: {self.id}, title: {self.name}>'
 
     def insert(self):
         db.session.add(self)
@@ -69,7 +73,7 @@ class Movie(db.Model):
 
 class Actor(db.Model):
     __tablename__ = 'actors'
-    
+
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     age = Column(Integer, nullable=False)
@@ -82,7 +86,7 @@ class Actor(db.Model):
 
     def __repr__(self):
         return f'<Actor ID: {self.id}, name: {self.name}>'
-    
+
     def insert(self):
         db.session.add(self)
         db.session.commit()
@@ -100,16 +104,6 @@ class Actor(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'age': self.age, 
+            'age': self.age,
             'gender': self.gender
         }
-
-
-
-
-
-
-
-    
-
-
