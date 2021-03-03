@@ -1,7 +1,9 @@
 # FSND Capstone - Stellar Casting API
 This is the capstone project for Udacity's Full Stack Web Developer Nanodegree program. 
 
-Stellar Casting is an API for the management of movies and actors at a hypothetical casting agency. It implements authorization and RBAC through Auth0 and lets users view, add, modify, and delete movies/actors from the database. See it live at https://stellar-casting.herokuapp.com/.
+Stellar Casting is an API for the management of movies and actors at a hypothetical casting agency. It implements authorization and RBAC through Auth0 and lets users view, add, modify, delete movies/actors from the database, and assign actors to movies.
+
+See it live at https://stellar-casting.herokuapp.com/
 
 The project covers the following skills:
 
@@ -98,6 +100,20 @@ python test_app.py
 
 ## API Reference
 This API is based on REST principles. Endpoints return JSON data about movies and actors at Stellar Casting.
+
+- [Actors Endpoints](#actors-endpoints)
+  * [GET `/actors`](#get---actors-)
+  * [POST `/actors`](#post---actors-)
+  * [PATCH `/actors/{actor_id}`](#patch---actors--actor-id--)
+  * [DELETE `/actors/{actor_id}`](#delete---actors--actor-id--)
+- [Movies Endpoints](#movies-endpoints)
+  * [GET `/movies`](#get---movies-)
+  * [GET `/movies/{movie_id}/actors`](#get---movies--movie-id--actors-)
+  * [POST `/movies`](#post---movies-)
+  * [POST `/movies/{movie_id}/actors`](#post---movies--movie-id--actors-)
+  * [PATCH `/movies/{movie_id}`](#patch---movies--movie-id--)
+  * [DELETE `/movies/{int:id}`](#delete---movies--int-id--)
+- [Errors](#errors)
 
 ### Authentication
 All endpoints for movies and actors require `Authorization: Bearer {Auth0 access token}` in the request header. See [Testing](#testing) for how to get test access tokens.  
