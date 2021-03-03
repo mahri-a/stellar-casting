@@ -102,17 +102,17 @@ python test_app.py
 This API is based on REST principles. Endpoints return JSON data about movies and actors at Stellar Casting.
 
 - [Actors Endpoints](#actors-endpoints)
-  * [GET `/actors`](#get---actors-)
-  * [POST `/actors`](#post---actors-)
-  * [PATCH `/actors/{actor_id}`](#patch---actors--actor-id--)
-  * [DELETE `/actors/{actor_id}`](#delete---actors--actor-id--)
+  * [GET `/actors`](#get-actors)
+  * [POST `/actors`](#post-actors)
+  * [PATCH `/actors/{actor_id}`](#patch-actorsactor_id)
+  * [DELETE `/actors/{actor_id}`](#delete-actorsactor_id)
 - [Movies Endpoints](#movies-endpoints)
-  * [GET `/movies`](#get---movies-)
-  * [GET `/movies/{movie_id}/actors`](#get---movies--movie-id--actors-)
-  * [POST `/movies`](#post---movies-)
-  * [POST `/movies/{movie_id}/actors`](#post---movies--movie-id--actors-)
-  * [PATCH `/movies/{movie_id}`](#patch---movies--movie-id--)
-  * [DELETE `/movies/{int:id}`](#delete---movies--int-id--)
+  * [GET `/movies`](#get-movies)
+  * [GET `/movies/{movie_id}/actors`](#get-moviesmovie_idactors)
+  * [POST `/movies`](#post-movies)
+  * [POST `/movies/{movie_id}/actors`](#post-moviesmovie_idactors)
+  * [PATCH `/movies/{movie_id}`](#patch-moviesmovie_id)
+  * [DELETE `/movies/{movie_id}`](#delete-moviesmovie_id)
 - [Errors](#errors)
 
 ### Authentication
@@ -429,7 +429,7 @@ Response
 }
 ```
 
-#### DELETE `/movies/{int:id}`
+#### DELETE `/movies/{movie_id}`
 
 Example
 ```bash
