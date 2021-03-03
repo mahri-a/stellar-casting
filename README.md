@@ -130,7 +130,7 @@ Actor attributes:
 * `gender`
 
 #### GET `/actors`
-Results are paginated in groups of 5. Include a request parameter to choose a page, starting from 1.  
+Returns all actors. Results are paginated in groups of 5. Include a request parameter to choose a page, starting from 1.  
 
 Example  
 ```bash
@@ -259,7 +259,7 @@ Movie attributes:
 * `release_date`
 
 #### GET `/movies`
-Results are paginated in groups of 5. Include a request parameter to choose a page, starting from 1.  
+Returns all movies. Results are paginated in groups of 5. Include a request parameter to choose a page, starting from 1.  
 
 Example
 ```bash
@@ -303,6 +303,39 @@ Response
 }
 ```
 
+#### GET `/movies/{movie_id}/actors`
+Returns actors assigned to a specific movie.
+
+Example
+```bash
+$ curl \
+-H "Authorization: Bearer $CASTING_DIRECTOR_JWT" \
+https://stellar-casting.herokuapp.com/movies/1/actors
+```
+
+Response
+```bash
+{
+    "actors": [
+        {
+            "age": 33,
+            "gender": "female",
+            "id": 3,
+            "name": "Nina Williams"
+        },
+        {
+            "age": 42,
+            "gender": "male",
+            "id": 4,
+            "name": "Eddy Gordo"
+        }
+    ],
+    "movie_title": "My Neighbor Botero",
+    "success": true,
+    "total_actors": 2
+}
+```
+
 #### POST `/movies`
 `title` and `release_date` are required.  
 
@@ -325,6 +358,36 @@ Response
     },
     "success": true,
     "total_records": 6
+}
+```
+
+#### POST `/movies/{movie_id}/actors`
+Assign an actor to a movie.
+
+Example  
+```bash
+$ curl -X POST \
+-H "Authorization: Bearer $CASTING_DIRECTOR_JWT" \
+-H "Content-Type: application/json" \
+-d '{"id": 4}' \
+https://stellar-casting.herokuapp.com/movies/2/actors
+```
+
+Response
+```bash
+{
+    "assigned": {
+        "age": 42,
+        "gender": "male",
+        "id": 4,
+        "name": "Eddy Gordo"
+    },
+    "success": true,
+    "to_movie": {
+        "id": 2,
+        "release_date": "Thu, 01 Jul 2021 00:00:00 GMT",
+        "title": "Rumble in Tejen"
+    }
 }
 ```
 
